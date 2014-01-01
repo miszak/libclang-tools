@@ -38,6 +38,9 @@ INCLUDE(CMake/LibSearch.cmake)
 # Include directories
 INCLUDE_DIRECTORIES(${LibClang_INCLUDE_DIRS})
 
+# Link directories
+LINK_DIRECTORIES(${LibClang_LIBRARIES})
+
 # Target 'main'
 SET(TARGET_main main)
 ADD_EXECUTABLE(${TARGET_main} main.cpp)
