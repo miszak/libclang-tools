@@ -26,7 +26,9 @@ flags = [
 '-x',
 'c++',
 '-isystem',
-'./'
+'./',
+'-isystem',
+'/home/miszak/build/libclang-tools/clang+llvm-3.3-Ubuntu-13.04-x86_64-linux-gnu/include'
 ]
 
 
