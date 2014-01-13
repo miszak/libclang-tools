@@ -5,11 +5,6 @@
 
 #include <iostream>
 
-/* ideas:
- * 1) Function name checker (with functor which decides what to check) - separate
- *    for functions, functions in namespaces and member functions
- * 2)
- */
 
 int main(int argc, char *argv[])
 {
