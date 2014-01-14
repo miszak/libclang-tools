@@ -8,26 +8,30 @@
 
 int main(int argc, char *argv[])
 {
-    auto tu = ClangTools::TranslationUnit(argc, argv);
+    std::cout << std::endl;
 
-    for (auto i = 0u; i < tu.getNumDiagnostics(); ++i)
+    auto translationUnit = ClangTools::TranslationUnit(argc, argv);
+
+    for (auto i = 0u; i < translationUnit.getNumDiagnostics(); ++i)
     {
-        auto diag = tu.getDiagnostic(i);
-        std::cout << diag.getText() << std::endl;
+        auto diagnostic = translationUnit.getDiagnostic(i);
+        std::cout << diagnostic.getText() << std::endl;
+        std::cout << "    Severity: " << diagnostic.getSeverityText() << std::endl;
 
-        auto loc = diag.getLocation();
-        std::cout << "    Loc: " << loc.first << ":" << loc.second << std::endl;
+        auto diagnosticLocation = diagnostic.getLocation();
+        std::cout << "    Loc: " << diagnosticLocation.first << ":" 
+                                 << diagnosticLocation.second << std::endl;
 
-        for (auto range : diag.getRanges())
+        for (auto diagnosticRange : diagnostic.getRanges())
         {
-            std::cout << "    Range: " << range.getText() << std::endl;
+            std::cout << "    Range: " << diagnosticRange.getText() << std::endl;
         }
 
-        for (auto fixIt : diag.getFixIts())
+        for (auto diagnosticFixIt : diagnostic.getFixIts())
         {
-            auto range = fixIt.getRange();
-            std::cout << "    FixIt: " << range.getText() << ": "
-                      << fixIt.getText() << std::endl;
+            auto fixItRange = diagnosticFixIt.getRange();
+            std::cout << "    FixIt: " << fixItRange.getText() << ": "
+                      << diagnosticFixIt.getText() << std::endl;
         }
     }
 

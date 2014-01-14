@@ -1,5 +1,12 @@
-1) Function name checker (with functor which decides what to check) - separate
-   for functions, functions in namespaces and member functions
-2) JSON compilation DB generation and usage
-3) Template "describer"
+* JSON compilation DB generation and usage:
+  http://clang.llvm.org/docs/JSONCompilationDatabase.html
+* Using cursors
+* Function name checker (with functor which decides what to check) - separate
+  for functions, functions in namespaces and member functions
+* Template "describer"
+* Usage of libclang through Python
+
+Further topics:
+* Using clang (C++) code instead of libclang
+* LibASTMatchers for e.g. code transformation
 

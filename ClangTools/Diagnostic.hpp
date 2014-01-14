@@ -49,6 +49,36 @@ public:
         clang_disposeDiagnostic(m_diag);
     }
 
+    CXDiagnosticSeverity getSeverity() const
+    {
+        return clang_getDiagnosticSeverity(m_diag);
+    }
+
+    std::string getSeverityText() const
+    {
+        switch (getSeverity())
+        {
+            case CXDiagnostic_Ignored:
+                return "ignored";
+                break;
+            case CXDiagnostic_Note:
+                return "note";
+                break;
+            case CXDiagnostic_Warning:
+                return "warning";
+                break;
+            case CXDiagnostic_Error:
+                return "error";
+                break;
+            case CXDiagnostic_Fatal:
+                return "fatal";
+                break;
+            default:
+                return "";
+                break;
+        }
+    }
+
     std::string getText() const
     {
         auto diagStr = clang_formatDiagnostic(

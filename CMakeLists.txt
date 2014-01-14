@@ -38,6 +38,8 @@ INCLUDE(CMake/LibSearch.cmake)
 # Include directories
 INCLUDE_DIRECTORIES(${LibClang_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
 
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Link directories
 LINK_DIRECTORIES(${LibClang_LIBRARIES})
 
