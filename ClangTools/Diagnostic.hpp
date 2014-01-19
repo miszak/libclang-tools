@@ -2,10 +2,10 @@
 #define __DIAGNOSTIC_HPP__
 
 #include <ClangTools/SourceLocations.hpp>
+#include <ClangTools/String.hpp>
 
 #include <clang-c/Index.h>
 
-#include <string>
 #include <vector>
 
 
@@ -18,13 +18,13 @@ public:
     class FixIt
     {
     public:
-        FixIt(char const * fixIt, CXSourceRange range) :
+        FixIt(String fixIt, CXSourceRange range) :
             m_range(range),
             m_fixIt(fixIt)
         {
         }
 
-        std::string getText() const
+        String getText() const
         {
             return m_fixIt;
         }
@@ -36,7 +36,7 @@ public:
 
     private:
         SourceRange m_range;
-        std::string m_fixIt;
+        String m_fixIt;
     };
 
     Diagnostic(CXDiagnostic diag) :
@@ -54,7 +54,7 @@ public:
         return clang_getDiagnosticSeverity(m_diag);
     }
 
-    std::string getSeverityText() const
+    String getSeverityText() const
     {
         switch (getSeverity())
         {
@@ -79,12 +79,11 @@ public:
         }
     }
 
-    std::string getText() const
+    String getText() const
     {
         auto diagStr = clang_formatDiagnostic(
                                  m_diag, clang_defaultDiagnosticDisplayOptions());
-        auto str = std::string(clang_getCString(diagStr));
-        clang_disposeString(diagStr);
+        auto str = String(diagStr);
         return str;
     }
 
@@ -114,8 +113,7 @@ public:
         {
             CXSourceRange range;
             auto fixItStr = clang_getDiagnosticFixIt(m_diag, i, &range);
-            fixIts.push_back(FixIt(clang_getCString(fixItStr), range));
-            clang_disposeString(fixItStr);
+            fixIts.push_back(FixIt(String(fixItStr), range));
         }
 
         return fixIts;

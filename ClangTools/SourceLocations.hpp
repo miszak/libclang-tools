@@ -1,10 +1,10 @@
 #ifndef __SOURCE_LOCATIONS_HPP__
 #define __SOURCE_LOCATIONS_HPP__
 
+#include <ClangTools/String.hpp>
 
 #include <clang-c/Index.h>
 
-#include <string>
 #include <utility>
 #include <sstream>
 
@@ -32,7 +32,7 @@ public:
         return getSourceLocation(clang_getRangeEnd(m_range));
     }
 
-    std::string getText() const
+    String getText() const
     {
         std::ostringstream oss;
         oss << getStart().first << ":" << getStart().second << " - "

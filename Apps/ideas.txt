@@ -3,7 +3,8 @@
 * Using cursors
 * Function name checker (with functor which decides what to check) - separate
   for functions, functions in namespaces and member functions
-* Template "describer"
+* Cursor's semantic parent vs. lexical parent
+* Template "describer"?
 * Usage of libclang through Python
 
 Further topics:
