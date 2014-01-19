@@ -35,6 +35,9 @@ INCLUDE(CMake/GetClang.cmake)
 # Libs
 INCLUDE(CMake/LibSearch.cmake)
 
+# Latex
+INCLUDE(CMake/UseLATEX.cmake)
+
 # Include directories
 INCLUDE_DIRECTORIES(${LibClang_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
 
@@ -45,6 +48,7 @@ LINK_DIRECTORIES(${LibClang_LIBRARIES})
 
 # Subdirectories
 ADD_SUBDIRECTORY(Apps)
+ADD_SUBDIRECTORY(Presentation)
 
 ################################################################################
 
