@@ -1,21 +1,32 @@
 #include <iostream>
 #include <string>
 
-void fun1();
-void funFunFun();
-void FunFun();
+void f1();
 
-namespace X
+namespace A
 {
-    void FunFun();
-    void fun();
+    void f2();
+
+    namespace X
+    {
+        void f3();
+        void f4();
+    }
+
+    class Y
+    {
+    public:
+        void f5();
+        void f6();
+    };
+
+    void Y::f6() {}
+    void f1() {}
+
+    void f7() {}
+    void X::f4() {}
+
+    template<typename T> T f8() { return T(); }
 }
 
-class Y
-{
-public:
-    void funFun();
-    void Fun();
-};
-
-void fun();
+void f1() {}

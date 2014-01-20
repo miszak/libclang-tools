@@ -27,6 +27,10 @@ public:
     {
     }
 
+    String()
+    {
+    }
+
     std::string str()
     {
         return *this;

@@ -12,6 +12,41 @@ namespace ClangTools
 class TranslationUnit
 {
 public:
+    class AstWalker
+    {
+    public:
+        AstWalker(CXCursorVisitor visitor, CXClientData data) :
+            m_visitor(visitor),
+            m_data(data)
+        {}
+
+        CXClientData getClientData() const
+        {
+            return m_data;
+        }
+
+        CXCursorVisitor getVisitor() const
+        {
+            return m_visitor;
+        }
+
+        void setFileName(String fileName)
+        {
+            m_fileName = fileName;
+        }
+
+        String const & getFileName() const
+        {
+            return m_fileName;
+        }
+
+    private:
+        CXCursorVisitor m_visitor;
+        CXClientData m_data;
+        String m_fileName;
+    };
+
+public:
     TranslationUnit(int argc, char *argv[]) :
         m_filename(argv[1])
     {
@@ -38,6 +73,14 @@ public:
     CXCursor getCursor() const
     {
         return clang_getTranslationUnitCursor(m_tu);
+    }
+
+    void walkAst(AstWalker * astWalker)
+    {
+        auto cursor = getCursor();
+        auto fileName = clang_getTranslationUnitSpelling(m_tu);
+        astWalker->setFileName(String(fileName));
+        clang_visitChildren(cursor, astWalker->getVisitor(), astWalker);
     }
 
     ~TranslationUnit()
