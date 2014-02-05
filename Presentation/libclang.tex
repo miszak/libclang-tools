@@ -2,9 +2,30 @@
 
 \usepackage[latin2]{inputenc}
 \usepackage{url}
+\usepackage{cmbright}
+\usepackage{tgadventor}
+%\renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
+\usepackage[T1]{fontenc}
+\usepackage{xcolor}
 %\usepackage{pgf}
 %\usepackage{tikz}
 %\usetikzlibrary{arrows,shapes,chains,positioning,shadows}
+
+\colorlet{darkblue}{blue!75!black}
+\colorlet{darkred}{red!75!black}
+\colorlet{darkgreen}{green!75!black}
+\usepackage{listings}
+\lstset{language=C++,
+        basicstyle=\ttfamily\footnotesize,
+        keywordstyle=\color{darkblue}\ttfamily,
+        stringstyle=\color{darkred}\ttfamily,
+        commentstyle=\color{gray}\ttfamily,
+        morecomment=[l][\color{darkgreen}]{\#},
+        numbers=left,
+        numbersep=4pt,
+        numberstyle=\scriptsize\color{gray},
+        keywordsprefix=clang_
+}
 
 \usetheme{Madrid}
 %\usecolortheme[rgb={0.6,0.1,0.3}]{structure}
@@ -27,15 +48,492 @@
 \end{frame}
 
 
-\section{Why libclang?}
+\section{Introduction}
+
+\begin{frame}
+    \frametitle{What is libclang?}
+    \textbf{libclang is a library for processing source code}
+    \vspace{2ex}
+    \begin{itemize}
+        \item Source code translation to Abstract Syntax Trees (AST)
+        \item Diagnostic reporting
+        \item Traversing AST with cursors
+        \item Mapping between cursors and source code
+        \item Cross-referencing in the AST
+        \item Code completion
+        \item Macro expansion
+        \item Token extraction and manipulation
+    \end{itemize}
+%   CompilationDatabase functions
+%   String manipulation routines
+%   File manipulation routines
+%   Physical source locations
+%   Diagnostic reporting
+%   Translation unit manipulation
+%   Cursor manipulations
+%   Mapping between cursors and source code
+%   Type information for CXCursors
+%   Information for attributes
+%   Traversing the AST with cursors
+%   Cross-referencing in the AST
+%   Module introspection
+%   Comment AST introspection
+%   C++ AST introspection
+%   Token extraction and manipulation
+%   Debugging facilities
+%   Code completion
+%   Miscellaneous utility functions
+%   Remapping functions
+%   Higher level API functions
+\end{frame}
+
+
 \begin{frame}
     \frametitle{Why libclang?}
     \begin{itemize}
         \item Widely-used and thus verified
         \item Broadest range of parsing capabilities
-        \item ...
+        \item Simple C API
+        \item Detailed information about source code locations at any moment
     \end{itemize}
 \end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Where shall we begin?}
+    Common header:
+\begin{lstlisting}[numbers=none]
+#include <clang-c/Index.h>
+\end{lstlisting}
+\vspace{2ex}
+    Create shared index and translation unit:
+\begin{lstlisting}[numbers=none]
+auto index = clang_createIndex(0, 0);
+auto tu = clang_parseTranslationUnit(
+              m_index, 0, argv, argc, 0, 0,
+              CXTranslationUnit_None);
+
+clang_disposeTranslationUnit(tu);
+clang_disposeIndex(index);
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Compilation Flags}
+    We would like to have means for generation and storing compilation flags
+
+    \vspace{2ex}
+    Solution:\\
+    \textbf{JSON Compilation Database Format Specification}
+
+    \vspace{2ex}
+    \begin{itemize}
+        \item Well defined, portable format
+        \item Decouples tools from build systems
+        \item Supported systems:
+            \begin{itemize}
+                \item CMake: via \verb+CMAKE_EXPORT_COMPILE_COMMANDS+ option
+                \item Build EAR: via \verb+bear -- make+
+            \end{itemize}
+        \item libclang can use these flags
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{JSON Compilation Database - example}
+    \begin{scriptsize}
+    \begin{verbatim}
+[
+{
+  "directory": "/home/miszak/build/libclang-tools/Apps",
+  "command": "/usr/bin/clang++
+              -std=c++11 -Wall -Wextra -pedantic -fsanitize=address
+              -I/home/miszak/build/libclang-tools/clang+llvm-3.4-x86_64-linux...
+              -I/home/miszak/libclang-tools
+              -o CMakeFiles/diagnose.dir/Diagnose.cpp.o
+              -c /home/miszak/libclang-tools/Apps/Diagnose.cpp",
+  "file": "/home/miszak/libclang-tools/Apps/Diagnose.cpp"
+},
+{
+  "directory": "/home/miszak/build/libclang-tools/Apps",
+  "command": "/usr/bin/clang++
+              -std=c++11 -Wall -Wextra -pedantic -fsanitize=address
+              -I/home/miszak/build/libclang-tools/clang+llvm-3.4-x86_64-linux...
+              -I/home/miszak/libclang-tools
+              -o CMakeFiles/function_name_check.dir/FunctionNameCheck.cpp.o
+              -c /home/miszak/libclang-tools/Apps/FunctionNameCheck.cpp",
+  "file": "/home/miszak/libclang-tools/Apps/FunctionNameCheck.cpp"
+}
+]
+    \end{verbatim}
+\end{scriptsize}
+\end{frame}
+
+
+\section{Diagnostics}
+
+\begin{frame}[fragile]
+    \frametitle{Obtaining Diagnostics}
+Given the translation unit \verb+tu+:
+\vspace{1ex}
+\begin{lstlisting}[numbers=none]
+for (auto diagNum : clang_getNumDiagnostics(tu))
+{
+    auto diag = clang_getDiagnostic(tu, diagNum);
+    auto diagStr =
+        clang_formatDiagnostic(diag,
+            clang_defaultDiagnosticDisplayOptions());
+
+    std::cout << clang_getCString(diagStr) << std::endl;
+
+    clang_disposeString(diagStr);
+}
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Diagnostics - Example}
+    From:
+\begin{lstlisting}
+class X
+{
+    const int a;
+}
+\end{lstlisting}
+    we will get \emph{formatted} output:
+    \begin{itemize}
+        \item class.cpp:1:7: warning: class 'X' does not declare any constructor to initialize its non-modifiable members
+        \item class.cpp:4:2: error: expected ';' after class
+        \item class.cpp:3:15: warning: private field 'a' is not used [-Wunused-private-field]
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Diagnostics - Details}
+    Each information about diagnostic can be obtained separately:
+    \begin{itemize}
+        \item clang\_getDiagnosticSeverity
+        \item clang\_getDiagnosticSpelling
+        \item clang\_getDiagnosticLocation and clang\_getSpellingLocation
+    \end{itemize}
+    \vspace{2ex}
+    But we want more\ldots
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Diagnostics - Fix-its}
+\begin{lstlisting}[numbers=none, basicstyle=\ttfamily\scriptsize]
+for (auto fixitNum: clang_getDiagnosticNumFixIts(diag))
+{
+    CXSourceRange range;
+    auto fixItStr =
+        clang_getDiagnosticFixIt(diag, fixitNum, &range);
+
+    auto rangeStart = clang_getRangeStart(range);
+    auto rangeEnd = clang_getRangeEnd(range);
+
+    unsigned lStart, cStart, lEnd, cEnd;
+    clang_getSpellingLocation(
+            rangeStart, 0, &lStart, &cStart, 0);
+    clang_getSpellingLocation(
+            rangeEnd, 0, &lEnd, &cEnd, 0);
+
+    std::cout << lStart << ":" << cStart << " - " <<
+              << lEnd   << ":" << lEnd << ": " <<
+              clang_getCString(fixItStr) << std::endl;
+
+    clang_disposeString(fixItStr);
+}
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Diagnostics - Fix-its - Output}
+\begin{columns}
+  \begin{column}{0.45\textwidth}
+    As simple as:
+    \vspace{1ex}
+
+    \texttt{4:2 - 4:2: ;}\\
+
+    \vspace{3ex}
+    In line \textbf{4}, \\  in column \textbf{2} \\ put \textbf{;}
+  \end{column}
+  \begin{column}{0.45\textwidth}
+\begin{lstlisting}[keywordsprefix=_]
+class X
+{
+    const int a;
+}_
+\end{lstlisting}
+  \end{column}
+\end{columns}
+\end{frame}
+
+
+\section{Walking the Abstract Syntax Tree}
+
+\begin{frame}
+    \frametitle{Walking the AST with CXCursor}
+    CXCursor represents generalised AST node
+
+    \vspace{1ex}
+    It can represent e.g.:
+    \begin{itemize}
+        \item declaration
+        \item definition
+        \item statement
+        \item reference
+    \end{itemize}
+
+    \vspace{1ex}
+    Provides:
+    \begin{itemize}
+        \item name
+        \item location and range in source code
+        \item type information
+        \item child(ren)
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Learning to Walk}
+    It is simple!
+
+    \vspace{2ex}
+    Provide:
+\begin{lstlisting}[numbers=none]
+typedef enum CXChildVisitResult (* CXCursorVisitor)(
+        CXCursor cursor,
+        CXCursor parent,
+        CXClientData client_data)
+\end{lstlisting}
+
+    \vspace{1ex}
+    and use:
+\begin{lstlisting}[numbers=none]
+unsigned clang_visitChildren(
+        CXCursor parent,
+        CXCursorVisitor visitor,
+        CXClientData client_data)
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{First Visit: Guest}
+\begin{lstlisting}[numbers=none]
+CXChildVisitResult guest(
+    CXCursor cursor,
+    CXCursor parent,
+    CXClientData client_data)
+{
+    switch (clang_getCursorKind(cursor))
+    {
+        case CXCursor_FunctionDecl:
+            std::cout << "function"; break;
+        case CXCursor_CXXMethod:
+            std::cout << "cxxmethod"; break;
+        default:
+            std::cout << "other"; break;
+    }
+    std::cout << std::endl;
+    return CXChildVisit_Recurse;
+}
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{First Visit}
+\begin{columns}
+\begin{column}{0.65\textwidth}
+\begin{lstlisting}[numbers=none]
+unsigned clang_visitChildren(
+    clang_getTranslationUnitCursor(tu),
+    guest, 0)
+\end{lstlisting}
+
+\vspace{2ex}
+Example:
+\begin{lstlisting}
+void f1();
+namespace A
+{
+    void f2();
+    class Y
+    {
+        void m1() {};
+    };
+    template<typename T> T ft1();
+}
+\end{lstlisting}
+\end{column}
+\begin{column}{0.2\textwidth}
+
+\vspace{6ex}
+
+Output:
+\begin{verbatim}
+function
+other
+function
+other
+cxxmethod
+other
+other
+other
+other
+\end{verbatim}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{When Things Get More Complicated}
+    Example was trivial.
+
+    \vspace{1ex}
+    What to do when translation unit has (many) includes?
+    \vspace{1ex}
+
+\begin{lstlisting}[numbers=none]
+auto sourceLoc = clang_getCursorLocation(cursor);
+CXFile file;
+clang_getFileLocation(sourceLoc, &file, 0, 0, 0);
+auto fileName = clang_getFileName(file);
+
+// skip cursors which are not in our file
+if (fileName != "/path/to/our/file.cpp")
+{
+    return CXChildVisit_Continue;
+}
+\end{lstlisting}
+
+We can \emph{always} learn CXCursor's detailed location.
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{What About Parents?}
+Given the cursor, we can learn about two kinds of parents:
+\begin{itemize}
+    \item lexical: \verb+clang_getCursorLexicalParent+
+    \item semantic: \verb+clang_getCursorSemanticParent+
+\end{itemize}
+
+\vspace{1ex}
+\begin{lstlisting}
+namespace N
+{
+    class C
+    {
+        void foo();
+    };
+
+    void C::foo() { /* ... */ }
+}
+\end{lstlisting}
+
+\vspace{1ex}
+For declarations: \verb+clang_getCursorDefinition+
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Reference Cursors}
+If the cursor kind is \verb+CXCursor_*Ref+ (Type, Variable\ldots),\\
+then we can learn about the referenced entity: \\
+\verb+clang_getCursorReferenced+
+
+\vspace{2ex}
+This way we can find all local references to type, variable\ldots
+And we are able to e.g.:
+\begin{itemize}
+    \item rename them (refactoring)
+    \item colour them (\emph{semantic} highlighting)
+    \item jump between occurences
+    \item jump between reference and declaration
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Unified Symbol Resolutions}
+Each \verb+CXCursor+ with external linkage\\ can be uniquely identified by
+USR:
+
+\vspace{1ex}
+\verb+clang_getCursorUSR+
+
+\vspace{3ex}
+This way we can deal with declarations\\ \emph{across} translation units.
+
+\vspace{3ex}
+Example: \verb+c:@N@A@C@X@F@m1#+ \\
+for \verb+A::Y::m1+ (method \verb+m1+ in class \verb+X+ in namespace \verb+A+)
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Tokens}
+Cursors enable us to see the code from AST perspective
+
+\vspace{1ex}
+Sometimes we just want tokens, e.g. in \emph{syntax highlighting}
+
+\vspace{1ex}
+\begin{lstlisting}[numbers=none]
+clang_tokenize(
+        CXTranslationUnit TU,
+        CXSourceRange Range,
+        CXToken **Tokens,
+        unsigned *NumTokens)
+\end{lstlisting}
+
+\vspace{1ex}
+For each token we can obtain:
+\begin{itemize}
+    \item kind (\verb+clang_getTokenKind+):\\
+          keyword, identifier, punctuation, literal, comment
+    \item source location and range (\verb+clang_getTokenLocation+)
+    \item spelling (\verb+clang_getTokenSpelling+)
+    \item corresponding cursor (\verb+clang_annotateTokens+)
+\end{itemize}
+\end{frame}
+
+
+\section{Code Completion}
+
+\begin{frame}[fragile]
+    \frametitle{Code Completion}
+
+\vspace{1ex}
+
+\vspace{1ex}
+\begin{lstlisting}[numbers=none]
+clang_tokenize(
+        CXTranslationUnit TU,
+        CXSourceRange Range,
+        CXToken **Tokens,
+        unsigned *NumTokens)
+\end{lstlisting}
+
+\end{frame}
+
+
+
+
+
+
 
 \section{libclang in Python}
 \begin{frame}
@@ -51,12 +549,20 @@
     \end{itemize}
 \end{frame}
 
+
 \section{References}
 
 \begin{frame}[fragile]
     \frametitle{References}
     \begin{thebibliography}{9}
-        \bibitem{1} \url{some url}
+        \bibitem{1} \url{http://clang.llvm.org/doxygen/}
+        \bibitem{2} \url{http://clang.llvm.org/docs/Tooling.html}
+        \bibitem{3} \url{http://llvm.org/devmtg/2010-11/Gregor-libclang.pdf}
+        \bibitem{4} \url{http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/}
+        \bibitem{5} \url{http://llvm.org/devmtg/2011-11/Gregor_ExtendingClang.pdf}
+        \bibitem{6} \url{https://github.com/miszak/libclang-tools}
+        \bibitem{7} \url{https://github.com/Valloric/YouCompleteMe}
+        \bibitem{8} \url{https://github.com/axw/cmonster}
     \end{thebibliography}
 \end{frame}
 
