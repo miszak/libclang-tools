@@ -7,8 +7,8 @@
 %\renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
 \usepackage[T1]{fontenc}
 \usepackage{xcolor}
-%\usepackage{pgf}
-%\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{tikz}
 %\usetikzlibrary{arrows,shapes,chains,positioning,shadows}
 
 \colorlet{darkblue}{blue!75!black}
@@ -32,16 +32,34 @@
 
 \title{libclang: on compiler territory}
 \author{Micha³ Bartkowiak}
-\date{\today}
+\date{February 13, 2014}
 
 \begin{document}
+
+{
+\usebackgroundtemplate{
+\vbox to \paperheight{\vfil\hbox to \paperwidth{\hfil
+\tikz\node[opacity=0.5] {
+\includegraphics[height=\textheight]{1000px-LLVM_Logo.png}};
+    \hfil}\vfil}
+}%
 
 \begin{frame}
     \titlepage
 \end{frame}
+}
 
 
 \section*{Outline}
+
+\usebackgroundtemplate{
+\vbox to \paperheight{\vfil\hbox to \paperwidth{\hfil
+\tikz\node[opacity=0.1] {
+\includegraphics[height=\textheight]{1000px-LLVM_Logo.png}};
+    \hfil}\vfil}
+}%
+
+
 \begin{frame}
     \frametitle{Outline}
     \tableofcontents
@@ -53,6 +71,7 @@
 \begin{frame}
     \frametitle{What is libclang?}
     \textbf{libclang is a library for processing source code}
+
     \vspace{2ex}
     \begin{itemize}
         \item Source code translation to Abstract Syntax Trees (AST)
@@ -64,27 +83,6 @@
         \item Macro expansion
         \item Token extraction and manipulation
     \end{itemize}
-%   CompilationDatabase functions
-%   String manipulation routines
-%   File manipulation routines
-%   Physical source locations
-%   Diagnostic reporting
-%   Translation unit manipulation
-%   Cursor manipulations
-%   Mapping between cursors and source code
-%   Type information for CXCursors
-%   Information for attributes
-%   Traversing the AST with cursors
-%   Cross-referencing in the AST
-%   Module introspection
-%   Comment AST introspection
-%   C++ AST introspection
-%   Token extraction and manipulation
-%   Debugging facilities
-%   Code completion
-%   Miscellaneous utility functions
-%   Remapping functions
-%   Higher level API functions
 \end{frame}
 
 
@@ -95,6 +93,7 @@
         \item Broadest range of parsing capabilities
         \item Simple C API
         \item Detailed information about source code locations at any moment
+        \item clang is now trendy ;-)
     \end{itemize}
 \end{frame}
 
@@ -219,6 +218,7 @@ class X
         \item clang\_getDiagnosticSeverity
         \item clang\_getDiagnosticSpelling
         \item clang\_getDiagnosticLocation and clang\_getSpellingLocation
+        \item clang\_getDiagnosticNumRanges and clang\_getDiagnosticRange
     \end{itemize}
     \vspace{2ex}
     But we want more\ldots
@@ -490,7 +490,6 @@ Cursors enable us to see the code from AST perspective
 \vspace{1ex}
 Sometimes we just want tokens, e.g. in \emph{syntax highlighting}
 
-\vspace{1ex}
 \begin{lstlisting}[numbers=none]
 clang_tokenize(
         CXTranslationUnit TU,
@@ -515,38 +514,193 @@ For each token we can obtain:
 
 \begin{frame}[fragile]
     \frametitle{Code Completion}
-
-\vspace{1ex}
+This is the moment when C-api becomes horryfying\ldots
 
 \vspace{1ex}
 \begin{lstlisting}[numbers=none]
-clang_tokenize(
-        CXTranslationUnit TU,
-        CXSourceRange Range,
-        CXToken **Tokens,
-        unsigned *NumTokens)
+clang_codeCompleteAt(
+        CXTranslationUnit tu,
+        const char * complete_filename,
+        unsigned complete_line,
+        unsigned complete_column,
+        struct CXUnsavedFile * unsaved_files,
+        unsigned num_unsaved_files,
+        unsigned options)
 \end{lstlisting}
 
 \end{frame}
 
 
+\begin{frame}[fragile]
+    \frametitle{Code Completion: Example}
+\begin{lstlisting}[numbers=none,basicstyle=\ttfamily\scriptsize]
+auto compls = clang_codeCompleteAt(
+                    tu, "fileName.cpp", 13, 7, 0, 0,
+                    clang_defaultCodeCompleteOptions());
 
+for (auto i = 0u; i < compls->NumResults; ++i)
+{
+  auto &complStr = completionResults->Results[i].CompletionString;
 
+  for (auto j = 0u; j < clang_getNumCompletionChunks(complStr); ++j)
+  {
+    auto chunkStr = clang_getCompletionChunkText(complStr, j);
+    std::cout << toString(chunkStr) << "_";
+  }
 
+  std::cout << std::endl;
+}
 
+clang_disposeCodeCompleteResults(compls);
+\end{lstlisting}
 
-\section{libclang in Python}
-\begin{frame}
-    \frametitle{libclang in Python}
-    Want to use libclang capabilities in Python? Not a problem.
+\vspace{1ex}
+\begin{scriptsize}
+* A bit of clang\_dispose* function calls is omitted...
+\end{scriptsize}
 \end{frame}
 
-\subsection{What's Next?}
+
+\begin{frame}[fragile]
+    \frametitle{Code Completion: Example}
+\begin{columns}
+\begin{column}{0.50\textwidth}
+\begin{lstlisting}
+class A
+{
+    void fp() {};
+public:
+    void f1() {};
+    void f2(int k = 0) {};
+    void f3(int i) {};
+};
+
+void foo()
+{
+    auto a = A();
+    a.
+}
+\end{lstlisting}
+\end{column}
+\begin{column}{0.44\textwidth}
+\begin{footnotesize}
+\begin{verbatim}
+void_f2_(__)_
+void_f3_(_int i_)_
+void_~A_(_)_
+A &_operator=_(_const A &_)_
+A &_operator=_(_A &&_)_
+A_::_
+void_fp_(_)_
+void_f1_(_)_
+\end{verbatim}
+\end{footnotesize}
+\end{column}
+\end{columns}
+\end{frame}
+
+
 \begin{frame}
-    \frametitle{What's Next}
-    \begin{itemize}
-        \item ...
-    \end{itemize}
+    \frametitle{Code Completion: Algorithm}
+Client triggers completion procedure at proper place\\ (e.g. at "."
+when it follows class/struct instance) and presents initial suggestions
+
+\vspace{2ex}
+The starting place is remembered
+
+\vspace{2ex}
+Then following procedure is done for each newly typed character:
+\begin{itemize}
+    \item trigger code completion
+    \item filter the results basing on contents of token
+    \item present suggestions
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Code Completion: Even More}
+For each completion we can also:
+\begin{itemize}
+    \item obtain its priority (\verb+clang_getCompletionPriority+)
+    \item get its context(s) (\verb+clang_codeCompleteGetContexts+)
+    \item for container context get kind of the container
+        (\verb+clang_codeCompleteGetContainerKind+)
+    \item obtain brief comment (\verb+lang_getCompletionBriefComment+)
+\end{itemize}
+\end{frame}
+
+
+\section{Tools}
+
+\begin{frame}[fragile]
+    \frametitle{c-index-test}
+    Use \textbf{c-index-test} for experiments
+
+\vspace{1ex}
+\begin{scriptsize}
+\begin{verbatim}
+usage: c-index-test -code-completion-at=<site> <compiler arguments>
+       c-index-test -code-completion-timing=<site> <compiler arguments>
+       c-index-test -cursor-at=<site> <compiler arguments>
+       [...]
+
+$ c-index-test -code-completion-at=<filename>:13:7 <filename + args>
+\end{verbatim}
+\end{scriptsize}
+
+\vspace{2ex}
+Output:
+\begin{scriptsize}
+\begin{verbatim}
+ClassDecl:{TypedText A}{Text ::} (75)
+CXXMethod:{ResultType void}{TypedText f1}{LeftParen (}{RightParen )} (34)
+CXXMethod:{ResultType void}{TypedText f2}{LeftParen (}{Optional {Placeholder int k}}
+    {RightParen )} (34)
+[...]
+\end{verbatim}
+\end{scriptsize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{libclang in Python}
+    Want to use libclang capabilities in Python? \\
+    Not a problem
+
+\vspace{1ex}
+\begin{itemize}
+    \item clang.cindex module: copy it or set PYTHONPATH
+        (warning: Python bindings are part of clang's source)
+    \item clang.cindex needs to be able to find the libclang.so
+    \item \verb+import clang.cindex+ \\
+          \verb+index = clang.cindex.Index.create()+ \\
+          \verb+tu = index.parse(sys.argv[1])+
+\end{itemize}
+
+\vspace{1ex}
+More on this:
+\url{http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/}
+\end{frame}
+
+
+\section{What's Next?}
+
+\begin{frame}
+    \frametitle{What's Next?}
+\textbf{Create awesome developer tools!}
+\vspace{1ex}
+\begin{itemize}
+    \item improvements for IDEs
+    \item code completion and syntax checking available for virtually any
+          text editor (e.g. Vim ;-))
+    \item refactoring tools
+    \item static code analyzers
+\end{itemize}
+
+\vspace{2ex}
+If C api is too clumsy dive directly into clang's C++ interface \\
+(and make presentation about it!)
 \end{frame}
 
 
@@ -554,22 +708,34 @@ clang_tokenize(
 
 \begin{frame}[fragile]
     \frametitle{References}
+    \begin{footnotesize}
     \begin{thebibliography}{9}
         \bibitem{1} \url{http://clang.llvm.org/doxygen/}
         \bibitem{2} \url{http://clang.llvm.org/docs/Tooling.html}
         \bibitem{3} \url{http://llvm.org/devmtg/2010-11/Gregor-libclang.pdf}
         \bibitem{4} \url{http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/}
         \bibitem{5} \url{http://llvm.org/devmtg/2011-11/Gregor_ExtendingClang.pdf}
-        \bibitem{6} \url{https://github.com/miszak/libclang-tools}
-        \bibitem{7} \url{https://github.com/Valloric/YouCompleteMe}
-        \bibitem{8} \url{https://github.com/axw/cmonster}
+        \bibitem{6} \url{https://github.com/llvm-mirror/clang/tree/master/tools/c-index-test}
+        \bibitem{7} \url{https://github.com/miszak/libclang-tools}
+        \bibitem{8} \url{https://github.com/Valloric/YouCompleteMe}
+        \bibitem{9} \url{https://github.com/axw/cmonster}
     \end{thebibliography}
+\end{footnotesize}
 \end{frame}
 
+
+{
+\usebackgroundtemplate{
+\vbox to \paperheight{\vfil\hbox to \paperwidth{\hfil
+\tikz\node[opacity=0.5] {
+\includegraphics[height=\textheight]{1000px-LLVM_Logo.png}};
+    \hfil}\vfil}
+}%
 
 \begin{frame}
     \titlepage
 \end{frame}
+}
 
 
 \end{document}
