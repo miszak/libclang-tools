@@ -64,27 +64,6 @@
         \item Macro expansion
         \item Token extraction and manipulation
     \end{itemize}
-%   CompilationDatabase functions
-%   String manipulation routines
-%   File manipulation routines
-%   Physical source locations
-%   Diagnostic reporting
-%   Translation unit manipulation
-%   Cursor manipulations
-%   Mapping between cursors and source code
-%   Type information for CXCursors
-%   Information for attributes
-%   Traversing the AST with cursors
-%   Cross-referencing in the AST
-%   Module introspection
-%   Comment AST introspection
-%   C++ AST introspection
-%   Token extraction and manipulation
-%   Debugging facilities
-%   Code completion
-%   Miscellaneous utility functions
-%   Remapping functions
-%   Higher level API functions
 \end{frame}
 
 
@@ -219,6 +198,7 @@ class X
         \item clang\_getDiagnosticSeverity
         \item clang\_getDiagnosticSpelling
         \item clang\_getDiagnosticLocation and clang\_getSpellingLocation
+        \item clang\_getDiagnosticNumRanges and clang\_getDiagnosticRange
     \end{itemize}
     \vspace{2ex}
     But we want more\ldots
@@ -490,7 +470,6 @@ Cursors enable us to see the code from AST perspective
 \vspace{1ex}
 Sometimes we just want tokens, e.g. in \emph{syntax highlighting}
 
-\vspace{1ex}
 \begin{lstlisting}[numbers=none]
 clang_tokenize(
         CXTranslationUnit TU,
@@ -515,37 +494,117 @@ For each token we can obtain:
 
 \begin{frame}[fragile]
     \frametitle{Code Completion}
-
-\vspace{1ex}
+This is the moment when C-api becomes horryfying\ldots
 
 \vspace{1ex}
 \begin{lstlisting}[numbers=none]
-clang_tokenize(
-        CXTranslationUnit TU,
-        CXSourceRange Range,
-        CXToken **Tokens,
-        unsigned *NumTokens)
+clang_codeCompleteAt(
+        CXTranslationUnit tu,
+        const char * complete_filename,
+        unsigned complete_line,
+        unsigned complete_column,
+        struct CXUnsavedFile * unsaved_files,
+        unsigned num_unsaved_files,
+        unsigned options)
 \end{lstlisting}
 
 \end{frame}
 
 
+\begin{frame}[fragile]
+    \frametitle{Code Completion: Example}
+\begin{lstlisting}[numbers=none,basicstyle=\ttfamily\scriptsize]
+auto compls = clang_codeCompleteAt(
+                    tu, "fileName.cpp", 13, 7, 0, 0,
+                    clang_defaultCodeCompleteOptions());
+
+for (auto i = 0u; i < compls->NumResults; ++i)
+{
+  auto &complStr = completionResults->Results[i].CompletionString;
+
+  for (auto j = 0u; j < clang_getNumCompletionChunks(complStr); ++j)
+  {
+    auto chunkStr = clang_getCompletionChunkText(complStr, j);
+    std::cout << toString(chunkStr) << "_";
+  }
+
+  std::cout << std::endl;
+}
+
+clang_disposeCodeCompleteResults(compls);
+\end{lstlisting}
+
+\vspace{1ex}
+\begin{scriptsize}
+* A bit of clang\_dispose* function calls is omitted...
+\end{scriptsize}
+\end{frame}
 
 
+\begin{frame}[fragile]
+    \frametitle{Code Completion: Example}
+\begin{columns}
+\begin{column}{0.50\textwidth}
+\begin{lstlisting}
+class A
+{
+    void fp() {};
+public:
+    void f1() {};
+    void f2(int k = 0) {};
+    void f3(int i) {};
+};
+
+void foo()
+{
+    auto a = A();
+    a.
+}
+\end{lstlisting}
+\end{column}
+\begin{column}{0.44\textwidth}
+\begin{footnotesize}
+\begin{verbatim}
+void_f2_(__)_
+void_f3_(_int i_)_
+void_~A_(_)_
+A &_operator=_(_const A &_)_
+A &_operator=_(_A &&_)_
+A_::_
+void_fp_(_)_
+void_f1_(_)_
+\end{verbatim}
+\end{footnotesize}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Code Completion: Even More}
+    \vspace{5ex}
+    \textbf{TBD}
+\end{frame}
 
 
 
 \section{libclang in Python}
+
 \begin{frame}
     \frametitle{libclang in Python}
     Want to use libclang capabilities in Python? Not a problem.
+
+    \vspace{5ex}
+    \textbf{TBD}
 \end{frame}
 
-\subsection{What's Next?}
+
+\section{What's Next?}
+
 \begin{frame}
     \frametitle{What's Next}
     \begin{itemize}
-        \item ...
+        \item \textbf{TBD}
     \end{itemize}
 \end{frame}
 

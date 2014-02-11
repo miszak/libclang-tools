@@ -83,6 +83,19 @@ public:
         clang_visitChildren(cursor, astWalker->getVisitor(), astWalker);
     }
 
+    CXCodeCompleteResults * completeCode(unsigned line, unsigned column)
+    {
+        return
+            clang_codeCompleteAt(
+                    m_tu,
+                    m_filename.c_str(),
+                    line,
+                    column,
+                    0,
+                    0,
+                    clang_defaultCodeCompleteOptions());
+    }
+
     ~TranslationUnit()
     {
         clang_disposeTranslationUnit(m_tu);
