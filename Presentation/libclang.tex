@@ -92,8 +92,12 @@
         \item Widely-used and thus verified
         \item Broadest range of parsing capabilities
         \item Simple C API
-        \item Detailed information about source code locations at any moment
-        \item clang is now trendy ;-)
+        \item Detailed information about source code locations \\ at any moment
+        \item libclang is now trendy ;-):
+        \begin{itemize}
+            \item XCode
+            \item YouCompleteMe (ultimate code completion for Vim)
+        \end{itemize}
     \end{itemize}
 \end{frame}
 
@@ -112,6 +116,8 @@ auto tu = clang_parseTranslationUnit(
               m_index, 0, argv, argc, 0, 0,
               CXTranslationUnit_None);
 
+// ...
+
 clang_disposeTranslationUnit(tu);
 clang_disposeIndex(index);
 \end{lstlisting}
@@ -120,7 +126,7 @@ clang_disposeIndex(index);
 
 \begin{frame}[fragile]
     \frametitle{Compilation Flags}
-    We would like to have means for generation and storing compilation flags
+    We would like to have means for generation and storing of compilation flags
 
     \vspace{2ex}
     Solution:\\
@@ -399,7 +405,7 @@ other
 
 \begin{frame}[fragile]
     \frametitle{When Things Get More Complicated}
-    Example was trivial.
+    Example was trivial
 
     \vspace{1ex}
     What to do when translation unit has (many) includes?
@@ -455,7 +461,7 @@ then we can learn about the referenced entity: \\
 \verb+clang_getCursorReferenced+
 
 \vspace{2ex}
-This way we can find all local references to type, variable\ldots
+This way we can find all local references to type, variable\ldots\
 And we are able to e.g.:
 \begin{itemize}
     \item rename them (refactoring)
@@ -626,7 +632,7 @@ For each completion we can also:
     \item get its context(s) (\verb+clang_codeCompleteGetContexts+)
     \item for container context get kind of the container
         (\verb+clang_codeCompleteGetContainerKind+)
-    \item obtain brief comment (\verb+lang_getCompletionBriefComment+)
+    \item obtain brief comment (\verb+clang_getCompletionBriefComment+)
 \end{itemize}
 \end{frame}
 
@@ -691,15 +697,18 @@ More on this:
 \textbf{Create awesome developer tools!}
 \vspace{1ex}
 \begin{itemize}
-    \item improvements for IDEs
+    \item basis for improvements of IDEs
     \item code completion and syntax checking available for virtually any
           text editor (e.g. Vim ;-))
     \item refactoring tools
+    \item automatic fixing of compile errors
+    \item automatic formatting
     \item static code analyzers
+    \item migration tools for new features in new language standards
 \end{itemize}
 
-\vspace{2ex}
-If C api is too clumsy dive directly into clang's C++ interface \\
+\vspace{1ex}
+If C api is too clumsy dive directly into clang's C++ interface
 (and make presentation about it!)
 \end{frame}
 
