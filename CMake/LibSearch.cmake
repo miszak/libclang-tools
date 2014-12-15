@@ -7,7 +7,7 @@ MESSAGE(STATUS "${PROJECT_NAME}: Configuring libraries")
 
 # libclang
 #FIND_PACKAGE(LibClang REQUIRED)
-SET(LibClang_VERSION 3.3)
+SET(LibClang_VERSION 3.5)
 SET(LibClang_INCLUDE_DIRS ${PATH_TO_LLVM_ROOT}/include)
 SET(LibClang_LIBRARIES ${PATH_TO_LLVM_ROOT}/lib)
 

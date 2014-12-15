@@ -1,23 +1,26 @@
-SET(CLANG_URL "http://llvm.org/releases/3.4")
-SET(CLANG_DIRNAME "clang+llvm-3.4-x86_64-linux-gnu-ubuntu-13.10")
+SET(CLANG_URL "http://llvm.org/releases/3.5.0")
+SET(CLANG_DIRNAME "clang+llvm-3.5.0-x86_64-linux-gnu-ubuntu-14.04")
+SET(CLANG_FS_DIRNAME "clang+llvm-3.5.0-x86_64-linux-gnu")
 
 # trick to run CMake always to check if we have clang downloaded in CMAKE_BINARY_DIR
 ADD_CUSTOM_TARGET(
     RUN_ALWAYS ALL
     COMMAND touch ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 
-IF(EXISTS "${CMAKE_BINARY_DIR}/${CLANG_DIRNAME}/lib/libclang.a")
-    MESSAGE(STATUS "${PROJECT_NAME}: Found Clang 3.4 in ${CMAKE_BINARY_DIR}/${CLANG_DIRNAME}")
+IF(EXISTS "${CMAKE_BINARY_DIR}/${CLANG_FS_DIRNAME}/lib/libclang.a")
+    MESSAGE(STATUS "${PROJECT_NAME}: Found Clang 3.5 in ${CMAKE_BINARY_DIR}/${CLANG_DIRNAME}")
 ELSE()
-    MESSAGE(STATUS "${PROJECT_NAME}: Downloading Clang 3.4 to ${CMAKE_BINARY_DIR}")
+    MESSAGE(STATUS "${PROJECT_NAME}: Downloading Clang 3.5 to ${CMAKE_BINARY_DIR}")
     SET(CLANG_FILENAME "${CLANG_DIRNAME}.tar.xz")
 
     FILE(DOWNLOAD "${CLANG_URL}/${CLANG_FILENAME}" "${CMAKE_BINARY_DIR}/${CLANG_FILENAME}"
          SHOW_PROGRESS)
 
     EXECUTE_PROCESS(COMMAND tar xf ${CLANG_FILENAME})
-    MESSAGE(STATUS "${PROJECT_NAME}: Clang 3.4 downloaded and extracted to ${CMAKE_BINARY_DIR}/${CMAKE_DIRNAME}")
+    MESSAGE(STATUS "${PROJECT_NAME}: Clang 3.5 downloaded and extracted to ${CMAKE_BINARY_DIR}/${CMAKE_DIRNAME}")
 ENDIF()
+
+SET(CLANG_DIRNAME ${CLANG_FS_DIRNAME})
 
 # set PATH_TO_LLVM_ROOT
 SET(PATH_TO_LLVM_ROOT "${CMAKE_BINARY_DIR}/${CLANG_DIRNAME}")
